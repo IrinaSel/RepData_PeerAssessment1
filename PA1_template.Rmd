@@ -1,51 +1,68 @@
 Peer Assessment 1. Reproducible Research
 ========================================
-Loading and preprocessing the data
+#Loading and preprocessing the data
 ```{r results='hide' }
-dataset<-read.csv("c:/Users/Fish/Documents/Temp/activity.csv",sep=",")
-dataset$date<-as.Date(dataset$date,"%Y-%m-%d")
 Sys.setlocale("LC_TIME", "English")
+url<-"http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+download.file(url,"activity.zip")
+activity<-unzip("activity.zip")
+dataset<-read.csv(activity,sep=",")
+dataset$date<-as.Date(dataset$date,"%Y-%m-%d")
+dataset$steps<-as.numeric(dataset$steps)
 ```
-What is mean total number of steps taken per day?
+##What is mean total number of steps taken per day?
 ```{r}
-n<-with(dataset,aggregate(steps,by=list(date),sum))
-names(n)<-c("date","steps")
-n<-n[!is.na(n$steps),]
-hist(as.numeric(n$steps),main="Histogram of the total number of steps taken each day",xlab="steps",col="red")
-Men<-mean(as.numeric(n$steps))
-print(paste0("The mean total number of steps taken per day: ",Men))
-Med<-median(as.numeric(n$steps))
-print(paste0("The median total number of steps taken per day: ",Med))
+num_of_steps_day<-aggregate(steps~date,dataset,sum)$steps
+hist(num_of_steps_day,main="Histogram of the total number of steps taken each day",xlab="steps",col="red")
+```
 
-```
-What is the average daily activity pattern?
+The mean total number of steps taken per day:
 ```{r}
-g<-with(dataset,aggregate(steps,by=list(interval),FUN=mean,na.rm = TRUE))
-names(g)<-c("interval","steps")
-plot(g,xlab="5-minute interval",ylab="Average number of steps ", type="l")
-M<-g$interval[which.max(g$steps)]
-print(paste0("This interval contains the maximum number of steps: ",M))
+mean(num_of_steps_day)
 ```
-Imputing missing values
+The median total number of steps taken per day:
 ```{r}
-print("The total number of missing values in the dataset:")
+median(num_of_steps_day)
+```
+##What is the average daily activity pattern?
+```{r}
+num_of_steps_interval<-with(dataset,aggregate(steps,by=list(interval),FUN=mean,na.rm = TRUE))
+names(num_of_steps_interval)<-c("interval","steps")
+plot(num_of_steps_interval,xlab="5-minute interval",ylab="Average number of steps ", type="l")
+```
+
+This interval contains the maximum number of steps:
+```{r}
+num_of_steps_interval$interval[which.max(num_of_steps_interval$steps)]
+```
+##Imputing missing values
+The total number of missing values in the dataset:
+```{r}
 nrow(dataset[is.na(dataset$steps),])
-for(i in 1:nrow(dataset)){
-  if(is.na(dataset$steps[i])) {
-    x<-subset(g,g$interval==dataset$interval[i])
-    dataset$steps[i]<-x$steps
+```
+```{r}
+new_dataset<-dataset
+for(i in 1:nrow(new_dataset)){
+  if(is.na(new_dataset$steps[i])) {
+    x<-subset(num_of_steps_interval,num_of_steps_interval$interval==dataset$interval[i])
+    new_dataset$steps[i]<-x$steps
   }
 }
-n2<-with(dataset,aggregate(steps,by=list(date),sum))
-names(n2)<-c("date","steps")
-hist(as.numeric(n2$steps),main="Histogram of the total number of steps taken each day",xlab="steps",col="blue")
-Men<-mean(as.numeric(n2$steps))
-print(paste0("The mean total number of steps taken per day: ",Men))
-Med<-median(as.numeric(n2$steps))
-print(paste0("The median total number of steps taken per day: ",Med))
+new_num_of_steps_day<-aggregate(steps~date,new_dataset,sum)$steps
+hist(new_num_of_steps_day,main="Histogram of the total number of steps taken each day",xlab="steps",col="blue")
+```
+
+The mean total number of steps taken per day:
+```{r}
+mean(new_num_of_steps_day)
+```
+The median total number of steps taken per day:
+```{r}
+median(new_num_of_steps_day)
 ```
 After filling missing values the mean and median became the same. I fill NA's with the mean for exact 5-minute interval
-Are there differences in activity patterns between weekdays and weekends?
+
+##Are there differences in activity patterns between weekdays and weekends?
 ```{r}
 dataset$day <- weekdays(dataset$date)                            
 for (i in 1:nrow(dataset)) {                                       
@@ -57,9 +74,9 @@ for (i in 1:nrow(dataset)) {
     }
 }
 dataset$day <- as.factor(dataset$day) 
-n2<-with(dataset,aggregate(steps,by=list(interval,day),mean,na.rm = TRUE))
-names(n2)<-c("interval","day","steps")
+avg_week<-with(dataset,aggregate(steps,by=list(interval,day),mean,na.rm = TRUE))
+names(avg_week)<-c("interval","day","steps")
 library(ggplot2)
-sp <- ggplot(n2,aes(x=interval, y=steps)) + geom_line()
+sp <- ggplot(avg_week,aes(x=interval, y=steps)) + geom_line()
 sp+ facet_grid(day ~ .)
 ```
