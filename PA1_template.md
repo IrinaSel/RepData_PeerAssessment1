@@ -1,67 +1,76 @@
 Peer Assessment 1. Reproducible Research
 ========================================
-Loading and preprocessing the data
+#Loading and preprocessing the data
 
 ```r
-dataset<-read.csv("c:/Users/Fish/Documents/Temp/activity.csv",sep=",")
-dataset$date<-as.Date(dataset$date,"%Y-%m-%d")
 Sys.setlocale("LC_TIME", "English")
+url<-"http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+download.file(url,"activity.zip")
+activity<-unzip("activity.zip")
+dataset<-read.csv(activity,sep=",")
+dataset$date<-as.Date(dataset$date,"%Y-%m-%d")
 ```
-What is mean total number of steps taken per day?
+
+```
+## Warning in strptime(x, format, tz = "GMT"): unable to identify current timezone '5;0@CAL ':
+## please set environment variable 'TZ'
+```
+
+```
+## Warning in strptime(x, format, tz = "GMT"): unknown timezone 'localtime'
+```
 
 ```r
-n<-with(dataset,aggregate(steps,by=list(date),sum))
-names(n)<-c("date","steps")
-n<-n[!is.na(n$steps),]
-hist(as.numeric(n$steps),main="Histogram of the total number of steps taken each day",xlab="steps",col="red")
+dataset$steps<-as.numeric(dataset$steps)
+```
+##What is mean total number of steps taken per day?
+
+```r
+num_of_steps_day<-aggregate(steps~date,dataset,sum)$steps
+hist(num_of_steps_day,main="Histogram of the total number of steps taken each day",xlab="steps",col="red")
 ```
 
 ![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png) 
 
-```r
-Men<-mean(as.numeric(n$steps))
-print(paste0("The mean total number of steps taken per day: ",Men))
-```
-
-```
-## [1] "The mean total number of steps taken per day: 10766.1886792453"
-```
+The mean total number of steps taken per day:
 
 ```r
-Med<-median(as.numeric(n$steps))
-print(paste0("The median total number of steps taken per day: ",Med))
+mean(num_of_steps_day)
 ```
 
 ```
-## [1] "The median total number of steps taken per day: 10765"
+## [1] 10766.19
 ```
-What is the average daily activity pattern?
-
-```r
-g<-with(dataset,aggregate(steps,by=list(interval),FUN=mean,na.rm = TRUE))
-names(g)<-c("interval","steps")
-plot(g,xlab="5-minute interval",ylab="Average number of steps ", type="l")
-```
-
-![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png) 
+The median total number of steps taken per day:
 
 ```r
-M<-g$interval[which.max(g$steps)]
-print(paste0("This interval contains the maximum number of steps: ",M))
+median(num_of_steps_day)
 ```
 
 ```
-## [1] "This interval contains the maximum number of steps: 835"
+## [1] 10765
 ```
-Imputing missing values
+##What is the average daily activity pattern?
 
 ```r
-print("The total number of missing values in the dataset:")
+num_of_steps_interval<-with(dataset,aggregate(steps,by=list(interval),FUN=mean,na.rm = TRUE))
+names(num_of_steps_interval)<-c("interval","steps")
+plot(num_of_steps_interval,xlab="5-minute interval",ylab="Average number of steps ", type="l")
+```
+
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png) 
+
+This interval contains the maximum number of steps:
+
+```r
+num_of_steps_interval$interval[which.max(num_of_steps_interval$steps)]
 ```
 
 ```
-## [1] "The total number of missing values in the dataset:"
+## [1] 835
 ```
+##Imputing missing values
+The total number of missing values in the dataset:
 
 ```r
 nrow(dataset[is.na(dataset$steps),])
@@ -72,38 +81,40 @@ nrow(dataset[is.na(dataset$steps),])
 ```
 
 ```r
-for(i in 1:nrow(dataset)){
-  if(is.na(dataset$steps[i])) {
-    x<-subset(g,g$interval==dataset$interval[i])
-    dataset$steps[i]<-x$steps
+new_dataset<-dataset
+for(i in 1:nrow(new_dataset)){
+  if(is.na(new_dataset$steps[i])) {
+    x<-subset(num_of_steps_interval,num_of_steps_interval$interval==dataset$interval[i])
+    new_dataset$steps[i]<-x$steps
   }
 }
-n2<-with(dataset,aggregate(steps,by=list(date),sum))
-names(n2)<-c("date","steps")
-hist(as.numeric(n2$steps),main="Histogram of the total number of steps taken each day",xlab="steps",col="blue")
+new_num_of_steps_day<-aggregate(steps~date,new_dataset,sum)$steps
+hist(new_num_of_steps_day,main="Histogram of the total number of steps taken each day",xlab="steps",col="blue")
 ```
 
-![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png) 
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png) 
 
-```r
-Men<-mean(as.numeric(n2$steps))
-print(paste0("The mean total number of steps taken per day: ",Men))
-```
-
-```
-## [1] "The mean total number of steps taken per day: 10766.1886792453"
-```
+The mean total number of steps taken per day:
 
 ```r
-Med<-median(as.numeric(n2$steps))
-print(paste0("The median total number of steps taken per day: ",Med))
+mean(new_num_of_steps_day)
 ```
 
 ```
-## [1] "The median total number of steps taken per day: 10766.1886792453"
+## [1] 10766.19
+```
+The median total number of steps taken per day:
+
+```r
+median(new_num_of_steps_day)
+```
+
+```
+## [1] 10766.19
 ```
 After filling missing values the mean and median became the same. I fill NA's with the mean for exact 5-minute interval
-Are there differences in activity patterns between weekdays and weekends?
+
+##Are there differences in activity patterns between weekdays and weekends?
 
 ```r
 dataset$day <- weekdays(dataset$date)                            
@@ -116,11 +127,11 @@ for (i in 1:nrow(dataset)) {
     }
 }
 dataset$day <- as.factor(dataset$day) 
-n2<-with(dataset,aggregate(steps,by=list(interval,day),mean,na.rm = TRUE))
-names(n2)<-c("interval","day","steps")
+avg_week<-with(dataset,aggregate(steps,by=list(interval,day),mean,na.rm = TRUE))
+names(avg_week)<-c("interval","day","steps")
 library(ggplot2)
-sp <- ggplot(n2,aes(x=interval, y=steps)) + geom_line()
+sp <- ggplot(avg_week,aes(x=interval, y=steps)) + geom_line()
 sp+ facet_grid(day ~ .)
 ```
 
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png) 
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png) 
