@@ -211,16 +211,7 @@ download.file(url,&quot;activity.zip&quot;)
 activity&lt;-unzip(&quot;activity.zip&quot;)
 dataset&lt;-read.csv(activity,sep=&quot;,&quot;)
 dataset$date&lt;-as.Date(dataset$date,&quot;%Y-%m-%d&quot;)
-</code></pre>
-
-<pre><code>## Warning in strptime(x, format, tz = &quot;GMT&quot;): unable to identify current timezone &#39;5;0@CAL &#39;:
-## please set environment variable &#39;TZ&#39;
-</code></pre>
-
-<pre><code>## Warning in strptime(x, format, tz = &quot;GMT&quot;): unknown timezone &#39;localtime&#39;
-</code></pre>
-
-<pre><code class="r">dataset$steps&lt;-as.numeric(dataset$steps)
+dataset$steps&lt;-as.numeric(dataset$steps)
 </code></pre>
 
 <p>##What is mean total number of steps taken per day?</p>

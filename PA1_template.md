@@ -9,18 +9,6 @@ download.file(url,"activity.zip")
 activity<-unzip("activity.zip")
 dataset<-read.csv(activity,sep=",")
 dataset$date<-as.Date(dataset$date,"%Y-%m-%d")
-```
-
-```
-## Warning in strptime(x, format, tz = "GMT"): unable to identify current timezone '5;0@CAL ':
-## please set environment variable 'TZ'
-```
-
-```
-## Warning in strptime(x, format, tz = "GMT"): unknown timezone 'localtime'
-```
-
-```r
 dataset$steps<-as.numeric(dataset$steps)
 ```
 ##What is mean total number of steps taken per day?
